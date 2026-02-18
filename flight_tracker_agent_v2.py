@@ -116,7 +116,7 @@ Respond with ONLY valid JSON (no markdown, no backticks):
 }}"""
 
     response = gemini_client.models.generate_content(
-        model="gemini-1.5-flash-8b",
+        model="models/gemini-1.5-flash",
         contents=prompt
     )
     raw = response.text.strip()
