@@ -3,7 +3,7 @@
 ✈️  BLR → USA Flight Price Hunter — Automated Agent
 Runs daily at 2:30 AM CST, with extra focus on Tue/Wed
 Sends results to mounicachowdry@gmail.com
-Powered by Google Gemini (Free)
+Powered by Groq LLaMA 3.3 (Free)
 """
 
 import os
@@ -25,7 +25,7 @@ from groq import Groq
 GROQ_API_KEY    = os.environ.get("GROQ_API_KEY")
 GMAIL_SENDER    = os.environ.get("GMAIL_SENDER", "")
 GMAIL_APP_PASS  = os.environ.get("GMAIL_APP_PASS", "")
-RECIPIENT_EMAIL = os.environ.get("RECIPIENT_EMAIL", "mounicachowdry@gmail.com")
+RECIPIENT_EMAIL = os.environ.get("RECIPIENT_EMAIL", "")
 
 if not GROQ_API_KEY:
     raise ValueError("GROQ_API_KEY is not set in Railway environment variables!")
