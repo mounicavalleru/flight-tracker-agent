@@ -14,21 +14,20 @@ import logging
 from datetime import datetime
 import pytz
 from groq import Groq
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
+import resend
 
 # ─────────────────────────────────────────────
 #  ⚙️  CONFIGURATION — Set in Railway Variables
 # ─────────────────────────────────────────────
 GROQ_API_KEY     = os.environ.get("GROQ_API_KEY")
-SENDGRID_API_KEY = os.environ.get("SENDGRID_API_KEY")
+RESEND_API_KEY   = os.environ.get("RESEND_API_KEY")
 SENDER_EMAIL     = os.environ.get("SENDER_EMAIL", "")
 RECIPIENT_EMAIL  = os.environ.get("RECIPIENT_EMAIL", "")
 
 # Validate required environment variables
 missing = []
 if not GROQ_API_KEY:     missing.append("GROQ_API_KEY")
-if not SENDGRID_API_KEY: missing.append("SENDGRID_API_KEY")
+if not RESEND_API_KEY:   missing.append("RESEND_API_KEY")
 if not SENDER_EMAIL:     missing.append("SENDER_EMAIL")
 if not RECIPIENT_EMAIL:  missing.append("RECIPIENT_EMAIL")
 if missing:
@@ -264,15 +263,14 @@ def build_html_email(data: dict, is_tue_wed: bool) -> str:
 #  📨 SEND EMAIL
 # ─────────────────────────────────────────────
 def send_email(html_body: str, subject: str):
-    message = Mail(
-        from_email=SENDER_EMAIL,
-        to_emails=RECIPIENT_EMAIL,
-        subject=subject,
-        html_content=html_body
-    )
-    sg = SendGridAPIClient(SENDGRID_API_KEY)
-    response = sg.send(message)
-    log.info(f"📧 Email sent to {RECIPIENT_EMAIL} — Status: {response.status_code}")
+    resend.api_key = RESEND_API_KEY
+    response = resend.Emails.send({
+        "from": SENDER_EMAIL,
+        "to": RECIPIENT_EMAIL,
+        "subject": subject,
+        "html": html_body
+    })
+    log.info(f"📧 Email sent to {RECIPIENT_EMAIL} — ID: {response['id']}")
 
 
 # ─────────────────────────────────────────────
