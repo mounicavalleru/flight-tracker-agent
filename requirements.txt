@@ -1,4 +1,4 @@
 groq
-sendgrid
+resend
 schedule
 pytz
