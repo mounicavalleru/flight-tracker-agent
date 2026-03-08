@@ -151,9 +151,11 @@ def research_domestic_flights() -> dict:
     """Call Groq AI to research LIT ↔ SFO domestic flight prices."""
     log.info("🤖 Starting domestic flight research (LIT ↔ SFO)...")
 
-    prompt = f"""Research current domestic flight prices for these two US routes for May 10-20 2026:
+    prompt = f"""Research domestic flight prices SPECIFICALLY for May 10-20, 2026 (NOT any other dates) for these two US routes:
 1. Little Rock (LIT) → San Francisco (SFO)
 2. San Francisco (SFO) → Little Rock (LIT)
+
+IMPORTANT: Travel dates are strictly May 10-20, 2026 only. You MUST use only "May" in best_months field. Do NOT use September or any other month.
 
 Find cheapest one-way fares, best travel days, and airlines.
 Today's date: {datetime.now(CST).strftime('%A, %B %d, %Y')}.
@@ -295,7 +297,7 @@ def build_html_email(data: dict, is_tue_wed: bool, domestic_data: dict = None) -
             <span style="background:{deal_color(r['deal_score'])}22;color:{deal_color(r['deal_score'])};padding:4px 10px;border-radius:12px;font-size:12px;font-weight:bold;">{r['deal_score']}/10</span>
           </td>
           <td style="padding:14px 10px;color:#7eb8f7;font-size:12px;">{trend_arrow(r.get('price_trend','stable'))}</td>
-          <td style="padding:14px 10px;color:#5a7a9a;font-size:11px;">{', '.join(r.get('best_months', ['September'])[:2])}</td>
+          <td style="padding:14px 10px;color:#5a7a9a;font-size:11px;">May 10–20</td>
         </tr>
         <tr style="border-bottom:2px solid #0d1929;background:#070d18;">
           <td colspan="6" style="padding:6px 10px 12px 10px;color:#5a7a9a;font-size:11px;font-style:italic;">
