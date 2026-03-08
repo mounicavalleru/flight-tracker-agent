@@ -48,6 +48,14 @@ ROUTES = [
     {"city": "Little Rock",   "state": "Arkansas",   "code": "LIT", "emoji": "🌿"},
 ]
 
+# ─────────────────────────────────────────────
+#  🇺🇸 DOMESTIC ROUTES
+# ─────────────────────────────────────────────
+DOMESTIC_ROUTES = [
+    {"from_city": "Little Rock",   "from_code": "LIT", "to_city": "San Francisco", "to_code": "SFO", "emoji": "🌿→🌉"},
+    {"from_city": "San Francisco", "from_code": "SFO", "to_city": "Little Rock",   "to_code": "LIT", "emoji": "🌉→🌿"},
+]
+
 CST = pytz.timezone("America/Chicago")
 
 # ─────────────────────────────────────────────
@@ -137,9 +145,73 @@ Respond with ONLY valid JSON (no markdown, no backticks):
 
 
 # ─────────────────────────────────────────────
+#  🇺🇸 DOMESTIC FLIGHT RESEARCH
+# ─────────────────────────────────────────────
+def research_domestic_flights() -> dict:
+    """Call Groq AI to research LIT ↔ SFO domestic flight prices."""
+    log.info("🤖 Starting domestic flight research (LIT ↔ SFO)...")
+
+    prompt = f"""Research current domestic flight prices for these two US routes for May 10-20 2026:
+1. Little Rock (LIT) → San Francisco (SFO)
+2. San Francisco (SFO) → Little Rock (LIT)
+
+Find cheapest one-way fares, best travel days, and airlines.
+Today's date: {datetime.now(CST).strftime('%A, %B %d, %Y')}.
+
+Respond with ONLY valid JSON (no markdown, no backticks):
+{{
+  "domestic_routes": [
+    {{
+      "from_code": "LIT",
+      "from_city": "Little Rock",
+      "to_code": "SFO",
+      "to_city": "San Francisco",
+      "one_way_min": 200,
+      "one_way_max": 450,
+      "best_months": ["May"],
+      "recommended_airlines": ["American Airlines", "United"],
+      "deal_score": 7,
+      "price_trend": "stable",
+      "tip": "Book 3-4 weeks in advance for best fares"
+    }},
+    {{
+      "from_code": "SFO",
+      "from_city": "San Francisco",
+      "to_code": "LIT",
+      "to_city": "Little Rock",
+      "one_way_min": 200,
+      "one_way_max": 450,
+      "best_months": ["May"],
+      "recommended_airlines": ["American Airlines", "United"],
+      "deal_score": 7,
+      "price_trend": "stable",
+      "tip": "Tuesday/Wednesday departures tend to be cheapest"
+    }}
+  ],
+  "domestic_summary": "Brief summary of both routes"
+}}"""
+
+    response = groq_client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=800
+    )
+    raw = response.choices[0].message.content.strip()
+
+    if raw.startswith("```"):
+        raw = raw.split("```")[1]
+        if raw.startswith("json"):
+            raw = raw[4:]
+
+    data = json.loads(raw.strip())
+    log.info("✅ Domestic research complete.")
+    return data
+
+
+# ─────────────────────────────────────────────
 #  📧 EMAIL BUILDER
 # ─────────────────────────────────────────────
-def build_html_email(data: dict, is_tue_wed: bool) -> str:
+def build_html_email(data: dict, is_tue_wed: bool, domestic_data: dict = None) -> str:
     """Build a beautiful HTML email from the research data."""
     now_cst = datetime.now(CST).strftime("%A, %B %d, %Y at %I:%M %p CST")
     cheapest = next((r for r in data["routes"] if r["destination"] == data["overall_cheapest"]), data["routes"][0])
@@ -201,6 +273,36 @@ def build_html_email(data: dict, is_tue_wed: bool) -> str:
           <div style="font-size:12px;color:#5a9a5a;margin-top:4px;">This is the best time to book your BLR → USA flight.</div>
         </div>"""
 
+    # Build domestic rows
+    domestic_rows = ""
+    domestic_summary = "No domestic data available."
+    if domestic_data:
+        domestic_summary = domestic_data.get("domestic_summary", "")
+        for r in domestic_data.get("domestic_routes", []):
+            domestic_rows += f"""
+        <tr style="border-bottom:1px solid #1e2a3a;">
+          <td style="padding:14px 10px;color:#ffab00;font-weight:bold;">
+            {r['from_code']} → {r['to_code']}<br>
+            <span style="font-size:11px;color:#3d5a7a;">{r['from_city']} → {r['to_city']}</span>
+          </td>
+          <td style="padding:14px 10px;text-align:center;">
+            <div style="font-size:20px;font-weight:bold;color:#00c853;">${r['one_way_min']}</div>
+          </td>
+          <td style="padding:14px 10px;text-align:center;">
+            <div style="font-size:14px;color:#3d5a7a;">${r['one_way_max']}</div>
+          </td>
+          <td style="padding:14px 10px;text-align:center;">
+            <span style="background:{deal_color(r['deal_score'])}22;color:{deal_color(r['deal_score'])};padding:4px 10px;border-radius:12px;font-size:12px;font-weight:bold;">{r['deal_score']}/10</span>
+          </td>
+          <td style="padding:14px 10px;color:#7eb8f7;font-size:12px;">{trend_arrow(r.get('price_trend','stable'))}</td>
+          <td style="padding:14px 10px;color:#5a7a9a;font-size:11px;">{', '.join(r.get('best_months', ['September'])[:2])}</td>
+        </tr>
+        <tr style="border-bottom:2px solid #0d1929;background:#070d18;">
+          <td colspan="6" style="padding:6px 10px 12px 10px;color:#5a7a9a;font-size:11px;font-style:italic;">
+            ✈ {r['recommended_airlines'][0] if r.get('recommended_airlines') else 'Check airlines'} &nbsp;|&nbsp; 💡 {r.get('tip','')}
+          </td>
+        </tr>"""
+
     return f"""<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
 <style>body{{margin:0;padding:0;background:#050b14;font-family:'Courier New',monospace;color:#cdd9e8;}}</style>
@@ -252,6 +354,26 @@ def build_html_email(data: dict, is_tue_wed: bool) -> str:
     <a href="https://www.kayak.co.in" style="background:#1a2a4a;border:1px solid #2a3a5a;padding:10px 16px;border-radius:8px;color:#7eb8f7;font-size:12px;text-decoration:none;display:inline-block;margin:4px;">📊 Kayak</a>
     <a href="https://www.makemytrip.com/flights/international" style="background:#1a2a4a;border:1px solid #2a3a5a;padding:10px 16px;border-radius:8px;color:#7eb8f7;font-size:12px;text-decoration:none;display:inline-block;margin:4px;">🇮🇳 MakeMyTrip</a>
   </div>
+  <div style="background:#070d18;border:1px solid #1a2a3a;border-radius:12px;overflow:hidden;margin-bottom:20px;">
+    <div style="padding:14px 16px;border-bottom:1px solid #1a2a3a;font-size:11px;letter-spacing:3px;color:#ffab00;">🇺🇸 DOMESTIC ROUTES — LIT ↔ SFO</div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:#0a1220;font-size:10px;letter-spacing:1px;color:#3d5a7a;text-transform:uppercase;">
+          <th style="padding:10px;text-align:left;">Route</th>
+          <th style="padding:10px;text-align:center;">One-Way From</th>
+          <th style="padding:10px;text-align:center;">One-Way Max</th>
+          <th style="padding:10px;text-align:center;">Deal Score</th>
+          <th style="padding:10px;text-align:center;">Trend</th>
+          <th style="padding:10px;text-align:left;">Best Month</th>
+        </tr>
+      </thead>
+      <tbody>{domestic_rows}</tbody>
+    </table>
+  </div>
+  <div style="background:#070d18;border:1px solid #1a2a3a;border-radius:12px;padding:14px 16px;margin-bottom:20px;font-size:13px;color:#8aaccc;">
+    <div style="font-size:11px;letter-spacing:3px;color:#ffab00;margin-bottom:10px;">📝 DOMESTIC SUMMARY</div>
+    {domestic_summary}
+  </div>
   <div style="text-align:center;color:#1e2a3a;font-size:10px;letter-spacing:2px;padding-top:16px;border-top:1px solid #0d1520;">
     AI FLIGHT AGENT • DAILY SCAN • PRICES ARE AI ESTIMATES — VERIFY BEFORE BOOKING
   </div>
@@ -286,6 +408,7 @@ def flight_check_job():
 
     try:
         data = research_flights(is_tue_wed)
+        domestic_data = research_domestic_flights()
 
         cheapest_dest  = data.get("overall_cheapest", "?")
         cheapest_route = next((r for r in data["routes"] if r["destination"] == cheapest_dest), data["routes"][0])
@@ -293,11 +416,11 @@ def flight_check_job():
 
         prime_tag = " ⭐ PRIME BOOKING DAY" if is_tue_wed else ""
         subject = (
-            f"✈️ BLR→USA Flight Alert: {cheapest_dest} from ${price} RT "
+            f"✈️ BLR→USA + LIT↔SFO Flight Alert: {cheapest_dest} from ${price} RT "
             f"| {day_name}{prime_tag} | {now_cst.strftime('%b %d')}"
         )
 
-        html = build_html_email(data, is_tue_wed)
+        html = build_html_email(data, is_tue_wed, domestic_data)
         send_email(html, subject)
         log.info("✅ Job completed successfully.")
 
