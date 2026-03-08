@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✈ Flight Price Hunter — BLR → USA</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap');
+
+  :root {
+    --bg: #030810;
+    --bg2: #060f1e;
+    --bg3: #0a1628;
+    --border: #0d2040;
+    --blue: #1a6eff;
+    --blue-dim: #0d3a8a;
+    --green: #00e676;
+    --green-dim: #003d1f;
+    --amber: #ffab00;
+    --red: #ff5252;
+    --text: #c8d8ee;
+    --text-dim: #3d5a7a;
+    --text-mid: #5a7a9a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(26,110,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(26,110,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 32px 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    text-align: center;
+    padding: 40px 0 32px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 28px;
+    position: relative;
+  }
+
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 1px;
+    background: var(--blue);
+    box-shadow: 0 0 12px var(--blue);
+  }
+
+  .header-tag {
+    font-size: 10px;
+    letter-spacing: 6px;
+    color: var(--blue);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+
+  .header h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--blue);
+    letter-spacing: 2px;
+    text-shadow: 0 0 40px rgba(26,110,255,0.4);
+    margin-bottom: 10px;
+  }
+
+  .header-sub {
+    color: var(--text-dim);
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+
+  .header-date {
+    color: var(--text-mid);
+    font-size: 10px;
+  }
+
+  /* ── PRIME BANNER ── */
+  .prime-banner {
+    background: linear-gradient(135deg, #0a2a0a, #071a07);
+    border: 1px solid rgba(0,230,118,0.2);
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .prime-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(0,230,118,0.05) 0%, transparent 70%);
+  }
+
+  .prime-tag {
+    font-size: 9px;
+    letter-spacing: 4px;
+    color: var(--green);
+    margin-bottom: 6px;
+  }
+
+  .prime-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+  }
+
+  .prime-sub {
+    font-size: 11px;
+    color: #4a8a5a;
+    margin-top: 4px;
+  }
+
+  /* ── BEST DEAL CARD ── */
+  .best-deal {
+    background: linear-gradient(135deg, #071a07, #060f1a);
+    border: 1px solid rgba(0,230,118,0.15);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .best-deal::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(0,230,118,0.08) 0%, transparent 70%);
+  }
+
+  .best-deal-tag {
+    font-size: 9px;
+    letter-spacing: 4px;
+    color: var(--green);
+    margin-bottom: 10px;
+  }
+
+  .best-deal-route {
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 8px;
+  }
+
+  .best-deal-price {
+    font-family: 'Orbitron', monospace;
+    font-size: 36px;
+    font-weight: 700;
+    color: var(--green);
+    margin-bottom: 6px;
+    text-shadow: 0 0 30px rgba(0,230,118,0.3);
+  }
+
+  .best-deal-window {
+    font-size: 12px;
+    color: #4a8a5a;
+    margin-bottom: 12px;
+  }
+
+  .alert-box {
+    background: rgba(0,230,118,0.05);
+    border: 1px solid rgba(0,230,118,0.2);
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 12px;
+    color: #6acc8a;
+    display: inline-block;
+  }
+
+  /* ── STATS ROW ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .stat-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .stat-value {
+    font-family: 'Orbitron', monospace;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .stat-sub {
+    font-size: 10px;
+    color: var(--text-mid);
+    margin-top: 4px;
+  }
+
+  /* ── ROUTES TABLE ── */
+  .routes-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .card-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--blue);
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-header::before {
+    content: '';
+    width: 4px;
+    height: 14px;
+    background: var(--blue);
+    border-radius: 2px;
+    box-shadow: 0 0 8px var(--blue);
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead tr {
+    background: #040c18;
+  }
+
+  th {
+    padding: 10px 12px;
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    text-align: center;
+    font-weight: 400;
+  }
+
+  th:first-child { text-align: left; }
+
+  .route-row {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+  }
+
+  .route-row:hover { background: rgba(26,110,255,0.03); }
+
+  .route-detail {
+    background: #040c18;
+    border-bottom: 2px solid #020609;
+  }
+
+  td {
+    padding: 14px 12px;
+    text-align: center;
+    font-size: 13px;
+  }
+
+  td:first-child { text-align: left; }
+
+  .dest-name {
+    color: #7eb8f7;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .dest-meta {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .best-badge {
+    display: inline-block;
+    font-size: 9px;
+    background: rgba(0,230,118,0.1);
+    color: var(--green);
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-top: 4px;
+    border: 1px solid rgba(0,230,118,0.2);
+  }
+
+  .price-main {
+    font-family: 'Orbitron', monospace;
+    font-size: 16px;
+    font-weight: 700;
+  }
+
+  .price-max {
+    font-size: 10px;
+    color: var(--text-dim);
+    margin-top: 2px;
+  }
+
+  .cheaper-tag {
+    font-size: 9px;
+    color: var(--green);
+    margin-top: 2px;
+  }
+
+  .score-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .trend {
+    font-size: 11px;
+    color: #7eb8f7;
+  }
+
+  .months {
+    font-size: 10px;
+    color: var(--text-mid);
+  }
+
+  .detail-cell {
+    padding: 8px 12px 14px;
+    font-size: 11px;
+    color: var(--text-mid);
+    font-style: italic;
+  }
+
+  /* ── TIPS ── */
+  .tips-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .tip-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: #8aaccc;
+    line-height: 1.6;
+  }
+
+  .tip-num {
+    color: var(--blue);
+    min-width: 22px;
+    font-weight: 600;
+  }
+
+  /* ── SUMMARY ── */
+  .summary-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .summary-text {
+    font-size: 12px;
+    color: #8aaccc;
+    line-height: 1.8;
+  }
+
+  /* ── BOOK NOW ── */
+  .book-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .book-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  .book-link {
+    background: #0d1e38;
+    border: 1px solid #1a2d4a;
+    padding: 10px 16px;
+    border-radius: 8px;
+    color: #7eb8f7;
+    font-size: 11px;
+    text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    transition: all 0.2s;
+  }
+
+  .book-link:hover {
+    background: #162840;
+    border-color: var(--blue);
+    color: white;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    text-align: center;
+    color: #0d1e38;
+    font-size: 9px;
+    letter-spacing: 3px;
+    padding-top: 20px;
+    border-top: 1px solid #060f1e;
+  }
+
+  /* Scan line effect */
+  .scanline {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(26,110,255,0.4), transparent);
+    animation: scan 4s linear infinite;
+    pointer-events: none;
+    z-index: 999;
+  }
+
+  @keyframes scan {
+    0% { top: 0; opacity: 1; }
+    90% { opacity: 0.3; }
+    100% { top: 100vh; opacity: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="scanline"></div>
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-tag">⚡ AI Flight Agent &nbsp;•&nbsp; Daily Report &nbsp;•&nbsp; Automated</div>
+    <h1>✈ FLIGHT PRICE HUNTER</h1>
+    <div class="header-sub">BLR → Los Angeles · San Francisco · Dallas · Houston · New York · Little Rock &nbsp;|&nbsp; Sep–Dec 2026</div>
+    <div class="header-date">Report generated: Wednesday, February 19, 2026 at 02:30 AM CST &nbsp;|&nbsp; Powered by Groq LLaMA 3.3</div>
+  </div>
+
+  <!-- PRIME BANNER -->
+  <div class="prime-banner">
+    <div class="prime-tag">⚡ PRIME BOOKING DAY DETECTED</div>
+    <div class="prime-title">Today is Wednesday — Airlines post their lowest fares on Tue/Wed!</div>
+    <div class="prime-sub">This is statistically the best time to book your BLR → USA flight.</div>
+  </div>
+
+  <!-- BEST DEAL -->
+  <div class="best-deal">
+    <div class="best-deal-tag">🏆 TODAY'S BEST DEAL</div>
+    <div class="best-deal-route">BLR → Los Angeles, California</div>
+    <div class="best-deal-price">$847</div>
+    <div class="best-deal-window">round-trip &nbsp;·&nbsp; Best window: June 1–15 or Sept 5–20</div>
+    <div class="alert-box">⚡ Price dropped 12% since last week — act fast before fares rise in March</div>
+  </div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Routes Analyzed</div>
+      <div class="stat-value" style="color: var(--blue)">6</div>
+      <div class="stat-sub">BLR → US Cities</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Cheapest RT</div>
+      <div class="stat-value" style="color: var(--green)">$847</div>
+      <div class="stat-sub">BLR → LAX</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Best Month</div>
+      <div class="stat-value" style="color: var(--amber); font-size:14px">SEPT</div>
+      <div class="stat-sub">Lowest demand</div>
+    </div>
+  </div>
+
+  <!-- ROUTES TABLE -->
+  <div class="routes-card">
+    <div class="card-header">📊 All Routes Analyzed</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Destination</th>
+          <th>One-Way</th>
+          <th>Round-Trip</th>
+          <th>Deal Score</th>
+          <th>Trend</th>
+          <th>Best Month</th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- LAX -->
+        <tr class="route-row">
+          <td>
+            <div class="dest-name">🌴 Los Angeles</div>
+            <div class="dest-meta">California · LAX</div>
+            <div class="best-badge">🏆 BEST DEAL</div>
+          </td>
+          <td>
+            <div class="price-main" style="color: #ccc">$620</div>
+            <div class="price-max">up to $890</div>
+          </td>
+          <td>
+            <div class="price-main" style="color: var(--green)">$847</div>
+            <div class="price-max">up to $1,200</div>
+            <div class="cheaper-tag">✅ CHEAPER</div>
+          </td>
+          <td><span class="score-badge" style="background:rgba(0,230,118,0.1);color:var(--green);border:1px solid rgba(0,230,118,0.2)">9/10</span></td>
+          <td><span class="trend">📉 Dropping</span></td>
+          <td><span class="months">Sept, Dec</span></td>
+        </tr>
+        <tr class="route-detail">
+          <td colspan="6" class="detail-cell">✈ Air India via Dubai &nbsp;|&nbsp; 💡 Prices expected to rise after March — book this week for best rates</td>
+        </tr>
+
+        <!-- SFO -->
+        <tr class="route-row">
+          <td>
+            <div class="dest-name">🌉 San Francisco</div>
+            <div class="dest-meta">California · SFO</div>
+          </td>
+          <td>
+            <div class="price-main" style="color: #ccc">$650</div>
+            <div class="price-max">up to $920</div>
+          </td>
+          <td>
+            <div class="price-main" style="color: var(--green)">$890</div>
+            <div class="price-max">up to $1,280</div>
+            <div class="cheaper-tag">✅ CHEAPER</div>
+          </td>
+          <td><span class="score-badge" style="background:rgba(0,230,118,0.1);color:var(--green);border:1px solid rgba(0,230,118,0.2)">8/10</span></td>
+          <td><span class="trend">➡️ Stable</span></td>
+          <td><span class="months">Sept, Dec</span></td>
+        </tr>
+        <tr class="route-detail">
+          <td colspan="6" class="detail-cell">✈ Emirates via Dubai &nbsp;|&nbsp; 💡 Round-trip saves ~$410 vs two one-ways — always book RT for this route</td>
+        </tr>
+
+        <!-- DFW -->
+        <tr class="route-row">
+          <td>
+            <div class="dest-name">🤠 Dallas</div>
+            <div class="dest-meta">Texas · DFW</div>
+          </td>
+          <td>
+            <div class="price-main" style="color: var(--green)">$580</div>
+            <div class="price-max">up to $820</div>
+            <div class="cheaper-tag">✅ CHEAPER</div>
+          </td>
+          <td>
+            <div class="price-main" style="color: #ccc">$960</div>
+            <div class="price-max">up to $1,350</div>
+          </td>
+          <td><span class="score-badge" style="background:rgba(255,171,0,0.1);color:var(--amber);border:1px solid rgba(255,171,0,0.2)">7/10</span></td>
+          <td><span class="trend">📉 Dropping</span></td>
+          <td><span class="months">July, Sept</span></td>
+        </tr>
+        <tr class="route-detail">
+          <td colspan="6" class="detail-cell">✈ Qatar Airways via Doha &nbsp;|&nbsp; 💡 One-way is cheaper here — consider one-way to DFW and return from another US city</td>
+        </tr>
+
+        <!-- IAH -->
+        <tr class="route-row">
+          <td>
+            <div class="dest-name">🚀 Houston</div>
+            <div class="dest-meta">Texas · IAH</div>
+          </td>
+          <td>
+            <div class="price-main" style="color: #ccc">$610</div>
+            <div class="price-max">up to $850</div>
+          </td>
+          <td>
+            <div class="price-main" style="color: var(--green)">$980</div>
+            <div class="price-max">up to $1,380</div>
+            <div class="cheaper-tag">✅ CHEAPER</div>
+          </td>
+          <td><span class="score-badge" style="background:rgba(255,171,0,0.1);color:var(--amber);border:1px solid rgba(255,171,0,0.2)">7/10</span></td>
+          <td><span class="trend">➡️ Stable</span></td>
+          <td><span class="months">Aug, Sept</span></td>
+        </tr>
+        <tr class="route-detail">
+          <td colspan="6" class="detail-cell">✈ Air India via London &nbsp;|&nbsp; 💡 September has lowest demand — target Sept 5–20 for best fares to Houston</td>
+        </tr>
+
+        <!-- JFK -->
+        <tr class="route-row">
+          <td>
+            <div class="dest-name">🗽 New York</div>
+            <div class="dest-meta">New York · JFK</div>
+          </td>
+          <td>
+            <div class="price-main" style="color: #ccc">$680</div>
+            <div class="price-max">up to $980</div>
+          </td>
+          <td>
+            <div class="price-main" style="color: var(--green)">$1,050</div>
+            <div class="price-max">up to $1,500</div>
+            <div class="cheaper-tag">✅ CHEAPER</div>
+          </td>
+          <td><span class="score-badge" style="background:rgba(255,82,82,0.1);color:var(--red);border:1px solid rgba(255,82,82,0.2)">5/10</span></td>
+          <td><span class="trend">📈 Rising</span></td>
+          <td><span class="months">Sept, Dec</span></td>
+        </tr>
+        <tr class="route-detail">
+          <td colspan="6" class="detail-cell">✈ Emirates via Dubai &nbsp;|&nbsp; 💡 JFK prices rising — if NYC is needed, book within the next 2 weeks to lock in current rates</td>
+        </tr>
+
+        <!-- LIT -->
+        <tr class="route-row">
+          <td>
+            <div class="dest-name">🌿 Little Rock</div>
+            <div class="dest-meta">Arkansas · LIT</div>
+          </td>
+          <td>
+            <div class="price-main" style="color: #ccc">$720</div>
+            <div class="price-max">up to $1,050</div>
+          </td>
+          <td>
+            <div class="price-main" style="color: var(--green)">$1,120</div>
+            <div class="price-max">up to $1,650</div>
+            <div class="cheaper-tag">✅ CHEAPER</div>
+          </td>
+          <td><span class="score-badge" style="background:rgba(255,82,82,0.1);color:var(--red);border:1px solid rgba(255,82,82,0.2)">4/10</span></td>
+          <td><span class="trend">📈 Rising</span></td>
+          <td><span class="months">July, Aug</span></td>
+        </tr>
+        <tr class="route-detail">
+          <td colspan="6" class="detail-cell">✈ American Airlines via DFW &nbsp;|&nbsp; 💡 Consider flying into DFW and taking a connecting domestic flight — saves ~$200</td>
+        </tr>
+
+      </tbody>
+    </table>
+  </div>
+
+  <!-- TIPS -->
+  <div class="tips-card">
+    <div class="card-header">💡 AI Booking Tips</div>
+    <br>
+    <div class="tip-item"><span class="tip-num">1.</span><span>Book on Tuesday or Wednesday when airlines release their weekly fare drops — you can save up to 15% compared to weekend booking.</span></div>
+    <div class="tip-item"><span class="tip-num">2.</span><span>Target September 5–20 for the best prices across all routes — summer demand drops sharply after Labor Day while school resumes in India.</span></div>
+    <div class="tip-item"><span class="tip-num">3.</span><span>Round-trips are cheaper than two one-ways on most routes except DFW — always compare both options before booking.</span></div>
+    <div class="tip-item"><span class="tip-num">4.</span><span>Air India and Emirates via Dubai consistently offer the best BLR departure prices — set fare alerts on Google Flights for both airlines.</span></div>
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="summary-card">
+    <div class="card-header">📝 AI Summary</div>
+    <br>
+    <div class="summary-text">
+      Los Angeles (LAX) remains the strongest value destination for BLR travelers this season, with round-trip fares starting at $847 — a 12% drop from last week driven by increased Air India and Emirates capacity on the route. California routes (LAX, SFO) offer the best deal scores overall, while New York and Little Rock are seeing upward price pressure and should be booked urgently or held until late August. The September 5–20 window across all destinations represents the optimal travel period, combining post-summer demand drops with favorable exchange rates and airline promotional cycles.
+    </div>
+  </div>
+
+  <!-- BOOK NOW -->
+  <div class="book-card">
+    <div class="card-header">🔗 Book Now</div>
+    <div class="book-links">
+      <a href="https://www.google.com/flights" class="book-link">🔍 Google Flights</a>
+      <a href="https://www.skyscanner.co.in" class="book-link">🛫 Skyscanner</a>
+      <a href="https://www.kayak.co.in" class="book-link">📊 Kayak</a>
+      <a href="https://www.makemytrip.com/flights/international" class="book-link">🇮🇳 MakeMyTrip</a>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    AI FLIGHT AGENT &nbsp;·&nbsp; AUTOMATED DAILY SCAN &nbsp;·&nbsp; PRICES ARE AI ESTIMATES — VERIFY BEFORE BOOKING
+  </div>
+
+</div>
+</body>
+</html>
