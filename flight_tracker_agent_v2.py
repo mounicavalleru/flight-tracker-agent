@@ -2,8 +2,8 @@
 """
 ✈️  BLR → USA Flight Price Hunter — 24/7 Tracker
 Checks prices every hour via GitHub Actions
-Tracks lowest prices of the day
-Sends ONE daily summary email at 8 PM CST with best prices found
+Sends morning email with current prices
+Sends INSTANT alert email whenever a new lowest price is found
 Powered by Groq LLaMA 3.3 (Free) + Resend (Free)
 """
 
