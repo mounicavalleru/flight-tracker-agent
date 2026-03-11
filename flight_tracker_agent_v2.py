@@ -453,8 +453,30 @@ def main():
     new_cheapest_route = state["routes"].get(new_cheapest_code, {})
     new_best_price     = new_cheapest_route.get("round_trip_min", 9999)
 
-    # Send email IMMEDIATELY if a new lowest price is found
-    if new_best_price < prev_best_price:
+    # ── SFO PRICE ALERT — send immediately if SFO RT drops to $200 or less ──
+    SFO_ALERT_THRESHOLD = 200
+    sfo_route    = state["routes"].get("SFO", {})
+    sfo_rt_price = sfo_route.get("round_trip_min", 9999)
+    sfo_alerted  = state.get("sfo_alert_sent_date") == today
+
+    if sfo_rt_price <= SFO_ALERT_THRESHOLD and not sfo_alerted:
+        log.info(f"🚨 SFO PRICE ALERT! RT dropped to ${sfo_rt_price} — under $200 threshold!")
+        prime_tag = " ⭐ PRIME DAY" if is_tue_wed else ""
+        subject = (
+            f"🚨 SFO ALERT: BLR→San Francisco dropped to ${sfo_rt_price} RT! "
+            f"| {now.strftime('%b %d %I:%M %p')}{prime_tag}"
+        )
+        html = build_html_email(state, is_tue_wed, checks)
+        send_email(html, subject)
+        state["sfo_alert_sent_date"] = today
+        save_state(state)
+        log.info("✅ SFO price alert email sent!")
+
+    elif sfo_rt_price <= SFO_ALERT_THRESHOLD and sfo_alerted:
+        log.info(f"📵 SFO alert already sent today (${sfo_rt_price} RT) — skipping")
+
+    # ── GENERAL NEW LOW ALERT ──
+    elif new_best_price < prev_best_price:
         drop = prev_best_price - new_best_price
         log.info(f"🎉 NEW LOWEST PRICE! ${prev_best_price} → ${new_best_price} (saved ${drop})")
         prime_tag = " ⭐ PRIME DAY" if is_tue_wed else ""
@@ -467,7 +489,6 @@ def main():
         log.info("✅ Instant alert email sent!")
 
     elif checks == 1:
-        # First check of the day — send morning kickoff email
         log.info("🌅 First check of the day — sending morning prices email")
         prime_tag = " ⭐ PRIME DAY" if is_tue_wed else ""
         subject = (
@@ -479,7 +500,7 @@ def main():
         log.info("✅ Morning email sent!")
 
     else:
-        log.info(f"ℹ️  No new low. Best today: BLR→{new_cheapest_code} ${new_best_price} RT — no email sent")
+        log.info(f"ℹ️  No alerts. SFO RT: ${sfo_rt_price} | Best: BLR→{new_cheapest_code} ${new_best_price} RT")
 
     log.info("✅ Done!")
 
