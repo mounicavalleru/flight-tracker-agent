@@ -273,31 +273,36 @@ def main():
 
     log.info(f"💰 Current RT: ${rt_price} | Today's lowest: ${state['lowest_rt']} | Threshold: ${PRICE_ALERT}")
 
-    # ── PRICE ALERT — send immediately if under $1000 and not alerted today ──
-    alert_sent = state.get("alert_sent", False)
+    # ── PRICE ALERT — send immediately if under $1000 ──
+    # Alert resets daily — only 1 alert per day max
+    alert_sent_date = state.get("alert_sent_date")
 
-    if rt_price < PRICE_ALERT and not alert_sent:
+    if rt_price < PRICE_ALERT and alert_sent_date != today:
         log.info(f"🚨 PRICE ALERT! ${rt_price} is under ${PRICE_ALERT} threshold — sending email!")
         subject = f"🚨 BLR→LIT PRICE ALERT: Round trip dropped to ${rt_price}! Book now!"
         html    = build_html_email(data, rt_price, now_str, checks, is_alert=True)
         send_email(html, subject)
-        state["alert_sent"] = True
+        state["alert_sent_date"] = today
         save_state(state)
         log.info("✅ Alert email sent!")
 
-    elif rt_price < PRICE_ALERT and alert_sent:
+    elif rt_price < PRICE_ALERT and alert_sent_date == today:
         log.info(f"📵 Alert already sent today for ${rt_price} RT — skipping")
-
-    elif checks == 1:
-        # Morning kickoff email with current prices
-        log.info("🌅 First check of the day — sending morning prices email")
-        subject = f"✈️ BLR→LIT Morning Update: Round trip from ${rt_price} | {now.strftime('%b %d')}"
-        html    = build_html_email(data, rt_price, now_str, checks, is_alert=False)
-        send_email(html, subject)
-        log.info("✅ Morning email sent!")
 
     else:
         log.info(f"ℹ️  ${rt_price} RT — above ${PRICE_ALERT} threshold, no alert needed")
+        # Always send a morning prices email on first check of the day
+        morning_sent_date = state.get("morning_sent_date")
+        if morning_sent_date != today:
+            log.info("🌅 Sending morning prices email")
+            subject = f"✈️ BLR→LIT Morning Update: Round trip from ${rt_price} | {now.strftime('%b %d')}"
+            html    = build_html_email(data, rt_price, now_str, checks, is_alert=False)
+            send_email(html, subject)
+            state["morning_sent_date"] = today
+            save_state(state)
+            log.info("✅ Morning email sent!")
+        else:
+            log.info("📵 Morning email already sent today — no email needed")
 
     log.info("✅ Done!")
 
