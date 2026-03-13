@@ -117,14 +117,19 @@ Respond with ONLY valid JSON (no markdown, no backticks):
     response = groq_client.chat.completions.create(
         model="llama-3.3-70b-versatile",
         messages=[{"role": "user", "content": prompt}],
-        max_tokens=600
+        max_tokens=1500
     )
     raw = response.choices[0].message.content.strip()
     if raw.startswith("```"):
         raw = raw.split("```")[1]
         if raw.startswith("json"):
             raw = raw[4:]
-    data = json.loads(raw.strip())
+    # Fix truncated JSON by finding last complete closing brace
+    raw = raw.strip()
+    last_brace = raw.rfind("}")
+    if last_brace != -1:
+        raw = raw[:last_brace+1]
+    data = json.loads(raw)
     log.info(f"✅ Research complete. RT price: ${data.get('round_trip_min')} – ${data.get('round_trip_max')}")
     return data
 
