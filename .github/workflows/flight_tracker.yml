@@ -25,7 +25,7 @@ jobs:
 
       - name: Run flight tracker
         env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
