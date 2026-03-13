@@ -72,7 +72,7 @@ def research_flights() -> dict:
 
     prompt = f"""Research the cheapest round trip flight prices for 1 adult from Bangalore (BLR) to Little Rock, Arkansas (LIT) for travel between September and December 2026.
 
-Find the absolute cheapest round trip options. Consider all airlines, layovers, and booking windows.
+Find the absolute cheapest round trip options. For each airline option, provide the estimated price and a direct booking search URL.
 Today's date: {now_str}.
 
 Respond with ONLY valid JSON (no markdown, no backticks):
@@ -82,7 +82,29 @@ Respond with ONLY valid JSON (no markdown, no backticks):
   "round_trip_max": 1400,
   "one_way_min": 500,
   "one_way_max": 800,
-  "recommended_airlines": ["Air India", "American Airlines"],
+  "airline_deals": [
+    {{
+      "airline": "Air India + American Airlines",
+      "estimated_price": 850,
+      "layover": "Dallas (DFW)",
+      "duration": "22-26 hrs",
+      "booking_url": "https://www.google.com/flights#search;f=BLR;t=LIT;d=2026-09-15;r=2026-10-15;tt=o"
+    }},
+    {{
+      "airline": "Emirates + American Airlines",
+      "estimated_price": 920,
+      "layover": "Dubai (DXB) + Dallas (DFW)",
+      "duration": "24-28 hrs",
+      "booking_url": "https://www.skyscanner.co.in/transport/flights/bang/lit/20260915/20261015/"
+    }},
+    {{
+      "airline": "Qatar Airways + American Airlines",
+      "estimated_price": 950,
+      "layover": "Doha (DOH) + Dallas (DFW)",
+      "duration": "24-28 hrs",
+      "booking_url": "https://www.kayak.co.in/flights/BLR-LIT/2026-09-15/2026-10-15"
+    }}
+  ],
   "best_layovers": ["Dubai", "London", "Dallas"],
   "best_travel_months": ["September", "October"],
   "best_booking_window": "Book 3-4 months in advance",
@@ -125,6 +147,40 @@ def build_html_email(data: dict, price: int, now_str: str, checks: int, is_alert
     months   = ", ".join(data.get("best_travel_months", []))
     score    = data.get("deal_score", 7)
 
+    # Build airline deals rows for alert email
+    airline_rows = ""
+    if is_alert:
+        for deal in data.get("airline_deals", []):
+            airline_rows += f"""
+      <tr style="border-bottom:1px solid #1a2a3a;">
+        <td style="padding:12px 10px;color:#7eb8f7;font-weight:bold;font-size:13px;">{deal.get("airline","")}</td>
+        <td style="padding:12px 10px;text-align:center;font-size:20px;font-weight:bold;color:#00c853;">${deal.get("estimated_price","")}</td>
+        <td style="padding:12px 10px;color:#8aaccc;font-size:12px;">{deal.get("layover","")}</td>
+        <td style="padding:12px 10px;color:#5a7a9a;font-size:12px;">{deal.get("duration","")}</td>
+        <td style="padding:12px 10px;text-align:center;">
+          <a href="{deal.get("booking_url","https://www.google.com/flights")}" style="background:#00c853;color:#000;padding:7px 14px;border-radius:6px;text-decoration:none;font-size:11px;font-weight:bold;">BOOK NOW</a>
+        </td>
+      </tr>"""
+
+    airline_table = ""
+    if is_alert and airline_rows:
+        airline_table = f"""
+  <div style="background:#070d18;border:1px solid #00c85333;border-radius:12px;overflow:hidden;margin-bottom:20px;">
+    <div style="padding:14px 16px;border-bottom:1px solid #1a2a3a;font-size:11px;letter-spacing:3px;color:#00c853;">✈ CHEAPEST AIRLINE OPTIONS — BOOK NOW</div>
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:#0a1220;font-size:10px;letter-spacing:1px;color:#3d5a7a;text-transform:uppercase;">
+          <th style="padding:10px;text-align:left;">Airline</th>
+          <th style="padding:10px;text-align:center;">Price RT</th>
+          <th style="padding:10px;text-align:left;">Layover</th>
+          <th style="padding:10px;text-align:left;">Duration</th>
+          <th style="padding:10px;text-align:center;">Book</th>
+        </tr>
+      </thead>
+      <tbody>{airline_rows}</tbody>
+    </table>
+  </div>"""
+
     alert_banner = ""
     if is_alert:
         alert_banner = f"""
@@ -133,7 +189,8 @@ def build_html_email(data: dict, price: int, now_str: str, checks: int, is_alert
     <div style="font-size:22px;font-weight:bold;color:white;">BLR → Little Rock dropped below $1,000!</div>
     <div style="font-size:36px;font-weight:900;color:#00c853;margin:10px 0;">${price} Round Trip</div>
     <div style="font-size:13px;color:#5a9a5a;">For 1 Adult • Sep–Dec 2026</div>
-  </div>"""
+  </div>
+  {airline_table}"""
 
     return f"""<!DOCTYPE html>
 <html><head><meta charset="UTF-8">
