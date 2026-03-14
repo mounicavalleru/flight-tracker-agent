@@ -11,17 +11,18 @@ import json
 import logging
 import resend
 from datetime import datetime
-from fast_flights import FlightData, Passengers, get_flights
+import requests
 import pytz
 
 # ─────────────────────────────────────────────
 #  ⚙️  CONFIGURATION — Set in GitHub Secrets
 # ─────────────────────────────────────────────
+SERPAPI_KEY     = os.environ.get("SERPAPI_KEY", "")
 RESEND_API_KEY  = os.environ.get("RESEND_API_KEY", "")
 SENDER_EMAIL    = os.environ.get("SENDER_EMAIL", "")
 RECIPIENT_EMAIL = os.environ.get("RECIPIENT_EMAIL", "")
 
-missing = [v for v in ["RESEND_API_KEY", "SENDER_EMAIL", "RECIPIENT_EMAIL"] if not os.environ.get(v)]
+missing = [v for v in ["SERPAPI_KEY", "RESEND_API_KEY", "SENDER_EMAIL", "RECIPIENT_EMAIL"] if not os.environ.get(v)]
 if missing:
     raise ValueError(f"Missing required secrets: {', '.join(missing)}")
 
@@ -60,57 +61,60 @@ def save_state(state: dict):
 
 
 # ─────────────────────────────────────────────
-#  ✈️  LIVE FLIGHT SEARCH — fast-flights
+#  ✈️  LIVE FLIGHT SEARCH — SerpApi
 # ─────────────────────────────────────────────
 def search_live_flights() -> dict:
-    """Fetch real live prices from Google Flights using fast-flights library."""
-    log.info("🔍 Fetching live BLR → LIT prices from Google Flights...")
+    """Fetch real live prices from Google Flights via SerpApi."""
+    log.info("🔍 Fetching live BLR → LIT prices from Google Flights via SerpApi...")
 
-    result = get_flights(
-        flight_data=[
-            FlightData(date=OUTBOUND_DATE, from_airport="BLR", to_airport="LIT"),
-            FlightData(date=RETURN_DATE,   from_airport="LIT", to_airport="BLR"),
-        ],
-        trip="round-trip",
-        seat="economy",
-        passengers=Passengers(adults=1),
-        fetch_mode="fallback",
-    )
+    params = {
+        "engine":        "google_flights",
+        "departure_id":  "BLR",
+        "arrival_id":    "LIT",
+        "outbound_date": OUTBOUND_DATE,
+        "return_date":   RETURN_DATE,
+        "adults":        "1",
+        "currency":      "USD",
+        "hl":            "en",
+        "type":          "1",
+        "api_key":       SERPAPI_KEY,
+    }
 
-    flights     = []
-    price_level = result.current_price  # "low" / "typical" / "high"
+    response = requests.get("https://serpapi.com/search", params=params, timeout=30)
+    response.raise_for_status()
+    data = response.json()
 
-    for f in result.flights:
-        # Parse price — remove $ and commas
-        try:
-            price_str = str(f.price).replace("$", "").replace(",", "").strip()
-            price_int = int(float(price_str))
-        except:
+    flights = []
+    for flight in data.get("best_flights", []) + data.get("other_flights", []):
+        price = flight.get("price")
+        if not price:
             continue
-
+        legs     = flight.get("flights", [])
+        leg      = legs[0] if legs else {}
+        layovers = flight.get("layovers", [])
         flights.append({
-            "airline":   f.name,
-            "price":     price_int,
-            "departure": str(f.departure),
-            "arrival":   str(f.arrival),
-            "duration":  str(f.duration),
-            "stops":     f.stops,
-            "is_best":   getattr(f, "is_best", False),
+            "airline":   leg.get("airline", "Unknown"),
+            "price":     price,
+            "departure": leg.get("departure_airport", {}).get("time", ""),
+            "arrival":   leg.get("arrival_airport", {}).get("time", ""),
+            "duration":  f"{flight.get('total_duration', 0) // 60}h {flight.get('total_duration', 0) % 60}m",
+            "stops":     len(layovers),
+            "layovers":  " → ".join([l.get("name","") for l in layovers]) if layovers else "Direct",
         })
 
-    # Sort by price
     flights.sort(key=lambda x: x["price"])
-    cheapest = flights[0]["price"] if flights else None
+    cheapest    = flights[0]["price"] if flights else None
+    price_level = data.get("price_insights", {}).get("price_level", "typical")
 
-    log.info(f"✅ Found {len(flights)} flights. Cheapest: ${cheapest} | Price level: {price_level}")
+    log.info(f"✅ Found {len(flights)} flights. Cheapest: ${cheapest} | Level: {price_level}")
 
     return {
-        "flights":      flights,
-        "cheapest":     cheapest,
-        "price_level":  price_level,
-        "outbound":     OUTBOUND_DATE,
-        "return_date":  RETURN_DATE,
-        "search_url":   f"https://www.google.com/flights#search;f=BLR;t=LIT;d={OUTBOUND_DATE};r={RETURN_DATE};tt=o;oc=1",
+        "flights":     flights,
+        "cheapest":    cheapest,
+        "price_level": price_level,
+        "outbound":    OUTBOUND_DATE,
+        "return_date": RETURN_DATE,
+        "search_url":  f"https://www.google.com/flights#search;f=BLR;t=LIT;d={OUTBOUND_DATE};r={RETURN_DATE};tt=o;oc=1",
     }
 
 
