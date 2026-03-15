@@ -120,13 +120,20 @@ def search_live_flights() -> dict:
     response.raise_for_status()
     data = response.json()
 
-    # Debug — log raw response structure
-    log.info(f"📦 API response keys: {list(data.keys())}")
+    # Debug — log raw response
+    log.info(f"📦 API status: {data.get('status')} | message: {data.get('message')}")
     if "data" in data:
         log.info(f"📦 data keys: {list(data['data'].keys()) if isinstance(data['data'], dict) else type(data['data'])}")
 
     flights = []
-    itineraries = data.get("data", {}).get("itineraries", [])
+    # Try multiple possible response structures
+    itineraries = (
+        data.get("data", {}).get("itineraries", []) or
+        data.get("data", {}).get("flights", []) or
+        data.get("itineraries", []) or
+        data.get("flights", []) or
+        []
+    )
     log.info(f"📦 Itineraries found: {len(itineraries)}")
 
     for item in itineraries:
