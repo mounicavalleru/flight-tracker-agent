@@ -117,6 +117,12 @@ def search_live_flights() -> dict:
     }
 
     response = requests.get(url, headers=headers, params=params, timeout=30)
+
+    # Handle rate limit gracefully
+    if response.status_code == 429:
+        log.warning("⚠️ Rate limit hit (429) — too many requests. Will retry next scheduled run.")
+        return {"flights": [], "cheapest": None, "outbound": OUTBOUND_DATE, "return_date": RETURN_DATE, "search_url": ""}
+
     response.raise_for_status()
     data = response.json()
 
