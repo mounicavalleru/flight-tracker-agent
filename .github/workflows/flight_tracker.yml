@@ -2,7 +2,7 @@ name: BLR LIT Flight Tracker
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # every 6 hours = 120 searches/month (within 500 free limit)
+    - cron: '0 */2 * * *'  # every 2 hours = 360 searches/month (within 500 free limit)
   workflow_dispatch:
 
 jobs:
@@ -38,4 +38,3 @@ jobs:
           git add daily_lowest_prices.json || true
           git diff --staged --quiet || git commit -m "Update prices state [skip ci]"
           git push || true
-          
