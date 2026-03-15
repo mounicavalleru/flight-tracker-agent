@@ -62,25 +62,13 @@ def save_state(state: dict):
 
 
 # ─────────────────────────────────────────────
-#  🔍 GET AIRPORT ENTITY ID
+#  ✈️  HARDCODED AIRPORT IDs (saves API calls)
 # ─────────────────────────────────────────────
-def get_airport_id(query: str) -> str:
-    """Get Sky Scrapper entity ID for an airport."""
-    url = "https://sky-scrapper.p.rapidapi.com/api/v1/flights/searchAirport"
-    headers = {
-        "x-rapidapi-host": RAPIDAPI_HOST,
-        "x-rapidapi-key":  RAPIDAPI_KEY,
-    }
-    response = requests.get(url, headers=headers, params={"query": query, "locale": "en-US"}, timeout=15)
-    response.raise_for_status()
-    data = response.json()
-    places = data.get("data", [])
-    if places:
-        entity_id = places[0].get("entityId", "")
-        sky_id    = places[0].get("skyId", "")
-        log.info(f"✅ Airport found: {query} → skyId={sky_id} entityId={entity_id}")
-        return sky_id, entity_id
-    raise ValueError(f"Airport not found: {query}")
+# These were confirmed from previous API calls — no need to look up every time
+BLR_SKY_ID    = "BLR"
+BLR_ENTITY_ID = "95673351"
+LIT_SKY_ID    = "LIT"
+LIT_ENTITY_ID = "95674054"
 
 
 # ─────────────────────────────────────────────
@@ -95,9 +83,10 @@ def search_live_flights() -> dict:
         "x-rapidapi-key":  RAPIDAPI_KEY,
     }
 
-    # Get airport IDs
-    blr_sky, blr_entity = get_airport_id("Bangalore")
-    lit_sky, lit_entity = get_airport_id("Little Rock")
+    # Use hardcoded airport IDs (confirmed from previous lookups)
+    blr_sky, blr_entity = BLR_SKY_ID, BLR_ENTITY_ID
+    lit_sky, lit_entity = LIT_SKY_ID, LIT_ENTITY_ID
+    log.info(f"✅ Using BLR entityId={blr_entity}, LIT entityId={lit_entity}")
 
     # Search round trip flights
     url    = "https://sky-scrapper.p.rapidapi.com/api/v1/flights/searchFlights"
@@ -375,4 +364,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
