@@ -100,7 +100,7 @@ def search_live_flights() -> dict:
     lit_sky, lit_entity = get_airport_id("Little Rock")
 
     # Search round trip flights
-    url    = "https://sky-scrapper.p.rapidapi.com/api/v2/flights/searchFlightsComplete"
+    url    = "https://sky-scrapper.p.rapidapi.com/api/v1/flights/searchFlights"
     params = {
         "originSkyId":          blr_sky,
         "destinationSkyId":     lit_sky,
@@ -110,7 +110,7 @@ def search_live_flights() -> dict:
         "returnDate":           RETURN_DATE,
         "cabinClass":           "economy",
         "adults":               "1",
-        "sortBy":               "price_low",
+        "sortBy":               "best",
         "currency":             "USD",
         "market":               "en-US",
         "countryCode":          "US",
@@ -369,4 +369,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    
