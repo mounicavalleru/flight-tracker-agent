@@ -110,7 +110,7 @@ def search_live_flights() -> dict:
         "returnDate":           RETURN_DATE,
         "cabinClass":           "economy",
         "adults":               "1",
-        "sortBy":               "cheapest",
+        "sortBy":               "price_low",
         "currency":             "USD",
         "market":               "en-US",
         "countryCode":          "US",
@@ -369,3 +369,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
