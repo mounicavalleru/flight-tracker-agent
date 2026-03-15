@@ -1,8 +1,8 @@
-name: BLR USA Flight Tracker
+name: BLR LIT Flight Tracker
 
 on:
   schedule:
-    - cron: '0 */6 * * *'  # every 6 hours = 120 searches/month (within 250 free limit)
+    - cron: '0 */6 * * *'  # every 6 hours = 120 searches/month (within 500 free limit)
   workflow_dispatch:
 
 jobs:
@@ -25,16 +25,16 @@ jobs:
 
       - name: Run flight tracker
         env:
-          SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
+          RAPIDAPI_KEY: ${{ secrets.RAPIDAPI_KEY }}
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
           RECIPIENT_EMAIL: ${{ secrets.RECIPIENT_EMAIL }}
         run: python flight_tracker_agent_v2.py
 
-      - name: Save daily prices back to repo
+      - name: Save state back to repo
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add daily_lowest_prices.json || true
-          git diff --staged --quiet || git commit -m "Update daily prices [skip ci]"
+          git diff --staged --quiet || git commit -m "Update prices state [skip ci]"
           git push || true
